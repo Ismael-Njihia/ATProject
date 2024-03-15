@@ -2,6 +2,8 @@ import express from 'express';
 import usdExchangeRate from './util/usdExchangeRate.js';
 import sendSMS from './messages/sendSMS.js';
 import { promises as fs } from 'fs';
+import convertUSDToKES from './util/usdKES.js'
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -62,6 +64,11 @@ sendSMS(phoneNumber, stockList);
         response = `END You will receive a SMS message on number ${phoneNumber} with the BTC/USD exchange rate`;
 
     }else if (text === '3') {
+        convertUSDToKES().then(rate => {
+            console.log('Rate:', rate);
+        })
+        
+
         response = 'END You selected option 3';
     }else if (text === '4') {
         response = 'CON Enter the amount you want to set an alert for';

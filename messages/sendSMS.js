@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 const africastalking = AfricasTalking({
   apiKey: process.env.API_KEY,
-  username: process.env.USERNAME,
+  username: 'sms001',
 });
 console.log(process.env.API_KEY);
 console.log(process.env.USERNAME);
