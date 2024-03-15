@@ -1,6 +1,7 @@
 import express from 'express';
 import usdExchangeRate from './util/usdExchangeRate.js';
 import sendSMS from './messages/sendSMS.js';
+import { promises as fs } from 'fs';
 
 const app = express();
 app.use(express.json());
@@ -9,36 +10,63 @@ app.use(express.urlencoded({ extended: false }));
 let collectingPhoneNumber = false; // State to track phone number collection
 let userPhoneNumber = ''; // Variable to store the phone number
 
-app.post('/ussd', (req, res) => {
-    const { text, phoneNumber} = req.body;
+async function getScrapedStockData() {
+    try {
+       // Read the scraped data from the JSON file
+       const data = await fs.readFile('scrapedData.json', 'utf8');
+       // Parse the JSON string into an object
+       const scrapedData = JSON.parse(data);
+       return scrapedData;
+    } catch (error) {
+       console.error('Error reading scraped data:', error);
+       return []; 
+    }
+   }
+
+app.post('/ussd', async (req, res) => {
+    const { text } = req.body;
     let response = '';
 
     if (text === '') {
         response = `CON Welcome to USSD Exchange Rate Service.
         1. Get Current NSE Stock Prices
-        2. Crypto Currency Prices
+        2. Crypto Curreny Prices
         3. Currency Exchange Rates
         4. Set up a price alert
         5. Get a list of stocks`;
-    }else if(text === '1'){
-        response = 'END You selected option 1';
-    }else if (text === '2') {
-        
-        usdExchangeRate().then(rate => {
-            sendSMS(phoneNumber, rate);
-        }).then(() => {
-            console.log('SMS sent');
-        }).catch(error => {
+    } else {
+        // User entered phone number
+        userPhoneNumber = text;
+        const digitsOnly = userPhoneNumber.replace(/\D/g, ''); 
+        const cleanedPhoneNumber = digitsOnly.slice(2);
+        const kenyanPhoneNumber = `+254${cleanedPhoneNumber}`;
+       
+        collectingPhoneNumber = false; 
+       
+        response = `END You will receive a SMS message on number ${kenyanPhoneNumber} with the stock prices`;
+        usdExchangeRate().then((rate) => {
+            sendSMS(kenyanPhoneNumber, rate);
+            console.log('BTC/USD:', rate);
+        }).catch((error) => {
             console.error('Error:', error);
         });
-        response = `END You will receive a SMS message on number ${phoneNumber} with the BTC/USD exchange rate`;
+       
+    }
 
-    }else if (text === '3') {
-        response = 'END You selected option 3';
-    }else if (text === '4') {
-        response = 'CON Enter the amount you want to set an alert for';
-    }else if (text === '5') {
-        response = 'END You selected option 5';
+    // Check if user is entering phone number
+    if (text === '1') {
+        collectingPhoneNumber = true;
+        response = `CON Please enter your phone number (e.g., 0741727406):`;
+    } else if (text === '2') {
+        collectingPhoneNumber = true;
+        response = `CON Please enter your phone number (e.g., 0741727406):`;
+    } else if (text === '5') {
+        // Option 5: Get a list of stocks
+        const stockData = await getScrapedStockData();
+        // Format the stock data into a string suitable for SMS
+        const stockList = stockData.map(stock => `${stock.code}: ${stock.price}`).join('\n');
+        response = `Con Here are the stocks:\n${stockList}`;
+        
     }
 
     // Send the response back to the API

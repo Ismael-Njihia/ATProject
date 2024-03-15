@@ -1,60 +1,41 @@
-const puppeteer = require('puppeteer');
+import { promises as fs } from 'fs';
+import XLSX from 'xlsx';
 
 (async () => {
-  const yesterdayDate = '20230718'; // Assuming this date is correct
-  const scrapedData = [];
+    let scrapedData = [];
 
-  try {
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
+    try {
+        // Read the Excel file
+        const workbook = XLSX.readFile('/home/red/Desktop/scraped_data.xlsx');
+        const sheetName = workbook.SheetNames[0]; // Assuming the data is in the first sheet
+        const worksheet = workbook.Sheets[sheetName];
 
-    // Navigate to the login page
-    await page.goto('https://live.mystocks.co.ke/login/', { waitUntil: 'networkidle0' });
+        // Convert the Excel data to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    // Login
-    await page.type('#lp_usr', 'wanjikumary5370@gmail.com');
-    await page.type('#lp_pwd', 'mary5370');
-    await page.click('#loginBtn2');
+        // Process the JSON data to match the expected format
+        scrapedData = jsonData.map(row => ({
+            date: row[0],
+            code: row[1],
+            low_12_months: row[2],
+            high_12_months: row[3],
+            low_days_trading: row[4],
+            high_days_trading: row[5],
+            price: row[6],
+            previous: row[7],
+            change: row[8],
+            change_percentage: row[9],
+            change_symbol: row[10],
+            volume: row[11],
+            adjusted_price: row[12]
+        }));
 
-    await page.waitForNavigation();
+        console.log('Scraped data:', scrapedData);
 
-    // Go to the price list page for the given date
-    const targetUrl = `https://live.mystocks.co.ke/login/?pg=%2Fprice_list%2F${yesterdayDate}`;
-    await page.goto(targetUrl, { waitUntil: 'networkidle0' });
+        // Write the scraped data to a JSON file
+        await fs.writeFile('scrapedData.json', JSON.stringify(scrapedData, null, 2));
 
-    // Scrape data from the table
-    const scrapedData = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('#pricelist tr'));
-      const data = [];
-
-      for (const row of rows.slice(3)) {
-        const cells = row.querySelectorAll('td');
-
-        if (cells.length >= 12) {
-          const [code, , low12Months, high12Months, lowDaysTrading, highDaysTrading, price, previous, change, changePer, changeSmbol, volume, adjustedPrice] = cells;
-          data.push({
-            code: code.textContent.trim(),
-            low_12_months: low12Months.textContent.trim(),
-            high_12_months: high12Months.textContent.trim(),
-            low_days_trading: lowDaysTrading.textContent.trim(),
-            high_days_trading: highDaysTrading.textContent.trim(),
-            price: price.textContent.trim(),
-            previous: previous.textContent.trim(),
-            change: change.textContent.trim(),
-            change_per: changePer.textContent.trim(),
-            change_smbol: changeSmbol.textContent.trim(),
-            volume: volume.textContent.trim(),
-            adjusted_price: adjustedPrice.textContent.trim(),
-          });
-        }
-      }
-      return data;
-    });
-
-    console.log('Scraped data:', scrapedData);
-
-    await browser.close();
-  } catch (error) {
-    console.error('Error:', error);
-  }
+    } catch (error) {
+        console.error('Error:', error);
+    }
 })();
