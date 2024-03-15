@@ -48,6 +48,8 @@ response += `Con Here are the top 5 stocks:\n${stockList}`;
 // response += 'Con 99 Back\n';
 // response += 'Con 0 Search Stocks by Code (eg., EGAD)\n';
 response = `END Here are the top 5 stocks as of Today:\n${stockList}`;
+
+sendSMS(phoneNumber, stockList);
     }else if (text === '2') {
         
         usdExchangeRate().then(rate => {

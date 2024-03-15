@@ -5,6 +5,8 @@ const africastalking = AfricasTalking({
   apiKey: process.env.API_KEY,
   username: process.env.USERNAME,
 });
+console.log(process.env.API_KEY);
+console.log(process.env.USERNAME);
 
 const sendSMS = (PhoneNumber, rate) => {
   const sms = africastalking.SMS;
