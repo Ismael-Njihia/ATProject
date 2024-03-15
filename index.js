@@ -1,6 +1,7 @@
 import express from 'express';
 import usdExchangeRate from './util/usdExchangeRate.js';
 import sendSMS from './messages/sendSMS.js';
+import { promises as fs } from 'fs';
 
 const app = express();
 app.use(express.json());
@@ -9,7 +10,20 @@ app.use(express.urlencoded({ extended: false }));
 let collectingPhoneNumber = false; // State to track phone number collection
 let userPhoneNumber = ''; // Variable to store the phone number
 
-app.post('/ussd', (req, res) => {
+async function getScrapedStockData() {
+    try {
+       // Read the scraped data from the JSON file
+       const data = await fs.readFile('scrapedData.json', 'utf8');
+       // Parse the JSON string into an object
+       const scrapedData = JSON.parse(data);
+       return scrapedData;
+    } catch (error) {
+       console.error('Error reading scraped data:', error);
+       return []; 
+    }
+   }
+
+app.post('/ussd', async (req, res) => {
     const { text } = req.body;
     let response = '';
 
@@ -17,9 +31,10 @@ app.post('/ussd', (req, res) => {
         // Initial prompt
         response = `CON Welcome to the Stock Prices\n
         1. Get Current NSE Stock Prices
-        2. Cyprto Currenct Prices;
+        2. Crypto Curreny Prices
         3. Currency Exchange Rates
-        4. Set up a price alert`;
+        4. Set up a price alert
+        5. Get a list of stocks`;
     } else {
         // User entered phone number
         userPhoneNumber = text;
@@ -30,7 +45,7 @@ app.post('/ussd', (req, res) => {
         collectingPhoneNumber = false; 
        
         response = `END You will receive a SMS message on number ${kenyanPhoneNumber} with the stock prices`;
-         usdExchangeRate().then((rate) => {
+        usdExchangeRate().then((rate) => {
             sendSMS(kenyanPhoneNumber, rate);
             console.log('BTC/USD:', rate);
         }).catch((error) => {
@@ -46,6 +61,13 @@ app.post('/ussd', (req, res) => {
     } else if (text === '2') {
         collectingPhoneNumber = true;
         response = `CON Please enter your phone number (e.g., 0741727406):`;
+    } else if (text === '5') {
+        // Option 5: Get a list of stocks
+        const stockData = await getScrapedStockData();
+        // Format the stock data into a string suitable for SMS
+        const stockList = stockData.map(stock => `${stock.code}: ${stock.price}`).join('\n');
+        response = `Con Here are the stocks:\n${stockList}`;
+        
     }
 
     // Send the response back to the API
