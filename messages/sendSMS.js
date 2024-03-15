@@ -2,7 +2,6 @@ import AfricasTalking from "africastalking";
 import dotenv from "dotenv";
 dotenv.config();
 const africastalking = AfricasTalking({
-<<<<<<< HEAD
     apiKey: '',
     username: ''
 })
@@ -21,5 +20,4 @@ const sendSMS = (PhoneNumber, rate) => {
     });
 }
 export default sendSMS;
-=======
->>>>>>> 7ac70cd118367b5147b5c90f9394d72db3b2e68e
+
