@@ -1,8 +1,11 @@
 import AfricasTalking from "africastalking";
+import dotenv from "dotenv";
+dotenv.config();
 const africastalking = AfricasTalking({
-    apiKey: '', 
-    username: ''
+    apiKey: '1334221841e0824ffa9d9ac6532805a6cbb81666763dce35027d48bbcfeff8c5',
+    username: 'sms001'
 })
+
 
 const sendSMS = (kenyanPhoneNumber, message) => {
     const sms = africastalking.SMS;
