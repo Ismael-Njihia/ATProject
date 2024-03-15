@@ -1,14 +1,23 @@
 import express from 'express';
 import usdExchangeRate from './util/usdExchangeRate.js';
 import sendSMS from './messages/sendSMS.js';
-
+import { promises as fs } from 'fs';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+async function getScrapedStockData() {
+    try {
+       const data = await fs.readFile('scrapedData.json', 'utf8');
+       const scrapedData = JSON.parse(data);
+       return scrapedData;
+    } catch (error) {
+       console.error('Error reading scraped data:', error);
+       return []; 
+    }
+}
 
-
-app.post('/ussd', (req, res) => {
+app.post('/ussd', async (req, res) => {
     const { text, phoneNumber} = req.body;
     let response = '';
 
@@ -18,9 +27,29 @@ app.post('/ussd', (req, res) => {
         2. Crypto Currency Prices
         3. Currency Exchange Rates
         4. Set up a price alert
-        5. Get a list of stocks`;
+        `;
     }else if(text === '1'){
-        response = 'END You selected option 1';
+const stockData = await getScrapedStockData();
+// Sort the stock data by price in descending order
+stockData.sort((a, b) => b.price - a.price);
+// Take only the top 5 items
+const top5Stocks = stockData.slice(0, 5);
+// Format the top 5 stock data into a string suitable for SMS
+const stockList = top5Stocks.map((stock, index) => {
+    // Check if the change is negative
+    const changePercentageDisplay = stock.Change_Percentage < '-%' ? "0%" : `${stock.Change_Percentage}`;
+
+    return `${index + 1}. ${stock.Code}: Price: ${stock.Price}, Previous: ${stock.Previous}, Change Percentage: ${changePercentageDisplay}`;
+}).join('\n');
+
+response += `Con Here are the top 5 stocks:\n${stockList}`;
+
+// response += 'Con 98 More\n';
+// response += 'Con 99 Back\n';
+// response += 'Con 0 Search Stocks by Code (eg., EGAD)\n';
+response = `END Here are the top 5 stocks as of Today:\n${stockList}`;
+
+sendSMS(phoneNumber, stockList);
     }else if (text === '2') {
         
         usdExchangeRate().then(rate => {
@@ -36,8 +65,6 @@ app.post('/ussd', (req, res) => {
         response = 'END You selected option 3';
     }else if (text === '4') {
         response = 'CON Enter the amount you want to set an alert for';
-    }else if (text === '5') {
-        response = 'END You selected option 5';
     }
 
     // Send the response back to the API
