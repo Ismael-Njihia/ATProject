@@ -14,7 +14,7 @@ const usdExchangeRate = async () => {
 
 export default usdExchangeRate;
 
-const convertUSDToKES = async (price) => {
+export const convertUSDToKES = async (price) => {
   const rates = await fetch("https://cdn.moneyconvert.net/api/latest.json");
   return price * rates.rates.KES;
 };
