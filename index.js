@@ -3,7 +3,7 @@ import usdExchangeRate from './util/usdExchangeRate.js';
 import sendSMS from './messages/sendSMS.js';
 import { promises as fs } from 'fs';
 import convertUSDToKES from './util/usdKES.js';
-import searchStockByCode from './search.js';
+
 
 const app = express();
 app.use(express.json());
@@ -27,8 +27,8 @@ app.post('/ussd', async (req, res) => {
     if (text === '') {
         response = `CON Welcome to USSD Exchange Rate Service.
         1. Get Current NSE Stock Prices
-        2. Crypto Currency Prices
-        3. Currency Exchange Rates
+        2. BTC price
+        3. Currenct USD/KES Exchange Rate
         4. Set up a price alert
         5. Search for Stocks  (eg., EGAD)
         `;
@@ -70,8 +70,7 @@ sendSMS(phoneNumber, stockList);
             sendSMS(phoneNumber, `The current USD/KES exchange rate is ${rate}`);
         })
         
-
-        response = 'END You selected option 3';
+        response = 'END You will receive a SMS message with the current USD/KES exchange rate';
     }else if (text === '4') {
         response = 'CON Enter the amount you want to set an alert for';
     }else if (text =='5'){
