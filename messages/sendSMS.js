@@ -12,7 +12,7 @@ const sendSMS = (PhoneNumber, rate) => {
   const sms = africastalking.SMS;
   const options = {
     to: PhoneNumber,
-    message: `The current BTC/USD exchange rate is ${rate}. Thank you for using our service`,
+    message: rate,
   };
   sms
     .send(options)

@@ -44,18 +44,18 @@ const stockList = top5Stocks.map((stock, index) => {
     return `${index + 1}. ${stock.Code}: Price: ${stock.Price}, Previous: ${stock.Previous}, Change Percentage: ${changePercentageDisplay}`;
 }).join('\n');
 
-response += `Con Here are the top 5 stocks:\n${stockList}`;
+response += `Con Here are top 5 Stocks\n${stockList}`;
 
 // response += 'Con 98 More\n';
 // response += 'Con 99 Back\n';
 // response += 'Con 0 Search Stocks by Code (eg., EGAD)\n';
-response = `END Here are the top 5 stocks as of Today:\n${stockList}`;
+response = `END Here are top 5 Stocks\n${stockList}`;
 
 sendSMS(phoneNumber, stockList);
     }else if (text === '2') {
         
         usdExchangeRate().then(rate => {
-            sendSMS(phoneNumber, rate);
+            sendSMS(phoneNumber, `The current BTC/USD exchange rate is ${rate}`);
         }).then(() => {
             console.log('SMS sent');
         }).catch(error => {
@@ -65,7 +65,7 @@ sendSMS(phoneNumber, stockList);
 
     }else if (text === '3') {
         convertUSDToKES().then(rate => {
-            console.log('Rate:', rate);
+            sendSMS(phoneNumber, `The current USD/KES exchange rate is ${rate}`);
         })
         
 
