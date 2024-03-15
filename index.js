@@ -10,42 +10,35 @@ let collectingPhoneNumber = false; // State to track phone number collection
 let userPhoneNumber = ''; // Variable to store the phone number
 
 app.post('/ussd', (req, res) => {
-    const { text } = req.body;
+    const { text, phoneNumber} = req.body;
     let response = '';
 
-    if (!collectingPhoneNumber) {
-        // Initial prompt
-        response = `CON Welcome to the Stock Prices\n
+    if (text === '') {
+        response = `CON Welcome to USSD Exchange Rate Service.
         1. Get Current NSE Stock Prices
-        2. Cyprto Currenct Prices;
+        2. Crypto Currency Prices
         3. Currency Exchange Rates
-        4. Set up a price alert`;
-    } else {
-        // User entered phone number
-        userPhoneNumber = text;
-        const digitsOnly = userPhoneNumber.replace(/\D/g, ''); 
-        const cleanedPhoneNumber = digitsOnly.slice(2);
-        const kenyanPhoneNumber = `+254${cleanedPhoneNumber}`;
-       
-        collectingPhoneNumber = false; 
-       
-        response = `END You will receive a SMS message on number ${kenyanPhoneNumber} with the stock prices`;
-         usdExchangeRate().then((rate) => {
-            sendSMS(kenyanPhoneNumber, rate);
-            console.log('BTC/USD:', rate);
-        }).catch((error) => {
+        4. Set up a price alert
+        5. Get a list of stocks`;
+    }else if(text === '1'){
+        response = 'END You selected option 1';
+    }else if (text === '2') {
+        
+        usdExchangeRate().then(rate => {
+            sendSMS(phoneNumber, rate);
+        }).then(() => {
+            console.log('SMS sent');
+        }).catch(error => {
             console.error('Error:', error);
         });
-       
-    }
+        response = `END You will receive a SMS message on number ${phoneNumber} with the BTC/USD exchange rate`;
 
-    // Check if user is entering phone number
-    if (text === '1') {
-        collectingPhoneNumber = true;
-        response = `CON Please enter your phone number (e.g., 0741727406):`;
-    } else if (text === '2') {
-        collectingPhoneNumber = true;
-        response = `CON Please enter your phone number (e.g., 0741727406):`;
+    }else if (text === '3') {
+        response = 'END You selected option 3';
+    }else if (text === '4') {
+        response = 'CON Enter the amount you want to set an alert for';
+    }else if (text === '5') {
+        response = 'END You selected option 5';
     }
 
     // Send the response back to the API
