@@ -2,7 +2,8 @@ import express from 'express';
 import usdExchangeRate from './util/usdExchangeRate.js';
 import sendSMS from './messages/sendSMS.js';
 import { promises as fs } from 'fs';
-import convertUSDToKES from './util/usdKES.js'
+import convertUSDToKES from './util/usdKES.js';
+import searchStockByCode from './search.js';
 
 const app = express();
 app.use(express.json());
@@ -29,6 +30,7 @@ app.post('/ussd', async (req, res) => {
         2. Crypto Currency Prices
         3. Currency Exchange Rates
         4. Set up a price alert
+        5. Search for Stocks  (eg., EGAD)
         `;
     }else if(text === '1'){
 const stockData = await getScrapedStockData();
@@ -72,6 +74,11 @@ sendSMS(phoneNumber, stockList);
         response = 'END You selected option 3';
     }else if (text === '4') {
         response = 'CON Enter the amount you want to set an alert for';
+    }else if (text =='5'){
+        response ='CON enter the stock you are looking for';
+        const searchResults = await searchStockByCode(stockData, )
+        console.log(text)
+
     }
 
     // Send the response back to the API
